@@ -17,4 +17,4 @@ Move the XY stage back to the origin over 4 seconds
 GOTO_XY: 0, 0, 4;
 
 Move the Z stage back to its origin over 2 seconds
-GOTO_Z: 0, 2;
+GOTO_Z: 0, 2; 

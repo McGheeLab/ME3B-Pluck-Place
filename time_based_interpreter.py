@@ -5,7 +5,7 @@ from DeviceInterface import XYStageManager, ZPStageManager
 
 # --- Command Execution Functions ---
 # These functions directly call the methods from the DeviceInterface classes.
-
+ 
 def handle_goto_xy(xy_stage, params):
     """
     Interprets the GOTO_XY command and uses the xy_stage object to execute it.
