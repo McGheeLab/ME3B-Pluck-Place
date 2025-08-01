@@ -1,0 +1,35 @@
+# Demo2 Command File
+# This file contains commands for the ME3B Pluck-Place system
+# Lines starting with # are comments and will be ignored
+# Empty lines are also ignored
+
+# First, set the reference zero position
+HOME
+
+# Move to an initial position
+# GOTO X,Y,Z moves the XY stage and printer Z axis relative to current position
+GOTO 10.0,5.0,2.0
+
+# Pick operation - moves printer axes X+=P1, Y+=P2, E+=P3
+# PICK 2.5,1.0,0.5
+
+# Move to a new location
+# GOTO 15.0,10.0,0.0
+
+# Place operation - moves printer axes X-=P1, Y-=P2, E-=P3
+PLACE 2.5,1.0,0.5
+
+# Move to another position for a second pick-place cycle
+GOTO -5.0,-3.0,1.0
+
+# Another pick operation
+# PICK 3.0,2.0,1.0
+
+# Final placement location
+GOTO 20.0,15.0,-1.0
+
+# Final place operation
+PLACE 3.0,2.0,1.0
+
+# Return to home position
+GOTO -40.0,-27.0,-2.0

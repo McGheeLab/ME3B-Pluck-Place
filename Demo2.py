@@ -21,13 +21,26 @@ def parse_floats(arg_str, count):
     return [float(p) for p in parts]
 
 
+def parse_line(line):
+    """Parse a line from a text file into a command and arguments."""
+    line = line.strip()
+    if not line or line.startswith('#'):
+        return None, None  # Skip empty lines and comments
+
+    parts = re.split(r"\s+", line, maxsplit=1)
+    cmd = parts[0].upper()
+    args = parts[1] if len(parts) > 1 else ''
+
+    return cmd, args
+
+
 def map_printer_moves(z=0.0, p1=0.0, p2=0.0, p3=0.0):
     """
     Return a move dictionary for ZPStageManager mapping:
       - Z axis => 'Z'
       - P1       => 'X'
       - P2       => 'Y'
-      - P3       => 'E'
+      - P3       => 'E'G
     """
     moves = {}
     if z:
@@ -108,6 +121,14 @@ def print_help():
 
 
 def main():
+    # Check for command line argument (filename)
+    if len(sys.argv) != 2:
+        print("Usage: python Demo2.py <command_file>")
+        print("Example: python Demo2.py procedure2.txt")
+        return
+    
+    filename = sys.argv[1]
+    
     # Instantiate managers
     xy = XYStageManager(simulate=False)
     zp = ZPStageManager(simulate=False)
@@ -116,34 +137,36 @@ def main():
     state = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'p1': 0.0, 'p2': 0.0, 'p3': 0.0}
     reference = state.copy()
 
-    print("Device CLI ready. Type 'HELP' for commands.")
-    while True:
-        try:
-            line = input('> ').strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\nExiting.")
-            break
-        if not line:
-            continue
-        parts = re.split(r"\s+", line, maxsplit=1)
-        cmd = parts[0].upper()
-        args = parts[1] if len(parts) > 1 else ''
-
-        if cmd in ('EXIT', 'QUIT'):
-            print("Goodbye.")
-            break
-        elif cmd == 'HELP':
-            print_help()
-        elif cmd == 'GOTO':
-            handle_goto(args, xy, zp, state)
-        elif cmd == 'PICK':
-            handle_pick(args, zp, state)
-        elif cmd == 'PLACE':
-            handle_place(args, zp, state)
-        elif cmd == 'HOME':
-            handle_home(xy, zp, state, reference)
-        else:
-            print(f"Unknown command: {cmd}. Type 'HELP' for available commands.")
+    print(f"Processing commands from: {filename}")
+    
+    try:
+        with open(filename, 'r') as file:
+            for line_num, line in enumerate(file, 1):
+                cmd, args = parse_line(line)
+                
+                # Skip empty lines and comments
+                if cmd is None:
+                    continue
+                
+                print(f"Line {line_num}: {line.strip()}")
+                
+                if cmd == 'GOTO':
+                    handle_goto(args, xy, zp, state)
+                elif cmd == 'PICK':
+                    handle_pick(args, zp, state)
+                elif cmd == 'PLACE':
+                    handle_place(args, zp, state)
+                elif cmd == 'HOME':
+                    handle_home(xy, zp, state, reference)
+                else:
+                    print(f"  WARNING: Unknown command: {cmd}")
+    
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+    
+    print("Command processing complete.")
 
 if __name__ == '__main__':
     main()
