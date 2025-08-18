@@ -77,13 +77,13 @@ def handle_pick(arg_str, zp: ZPStageManager, state: dict):
     except ValueError:
         print("Syntax: PICK P1,P2,P3")
         return
-    # Move printer axes using mapping function
-    zp.move_relative(map_printer_moves(p1=p1, p2=p2, p3=p3))
+    # Move printer axes negatively via mapping function
+    zp.move_relative(map_printer_moves(p1=-p1, p2=-p2, p3=-p3))
     # Update state
-    state['p1'] += p1
-    state['p2'] += p2
-    state['p3'] += p3
-    print(f"PICK executed: printer X+={p1}, Y+={p2}, E+={p3}")
+    state['p1'] -= p1
+    state['p2'] -= p2
+    state['p3'] -= p3
+    print(f"PICK executed: printer X-={p1}, Y-={p2}, E-={p3}")
 
 
 def handle_place(arg_str, zp: ZPStageManager, state: dict):
@@ -92,13 +92,13 @@ def handle_place(arg_str, zp: ZPStageManager, state: dict):
     except ValueError:
         print("Syntax: PLACE P1,P2,P3")
         return
-    # Move printer axes negatively via mapping function
-    zp.move_relative(map_printer_moves(p1=-p1, p2=-p2, p3=-p3))
+    # Move printer axes using mapping function
+    zp.move_relative(map_printer_moves(p1=p1, p2=p2, p3=p3))
     # Update state
-    state['p1'] -= p1
-    state['p2'] -= p2
-    state['p3'] -= p3
-    print(f"PLACE executed: printer X-={p1}, Y-={p2}, E-={p3}")
+    state['p1'] += p1
+    state['p2'] += p2
+    state['p3'] += p3
+    print(f"PLACE executed: printer X+={p1}, Y+={p2}, E+={p3}")
 
 
 def handle_home(xy: XYStageManager, zp: ZPStageManager, state: dict, ref: dict):
