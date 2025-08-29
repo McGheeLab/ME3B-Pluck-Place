@@ -843,9 +843,9 @@ if __name__ == "__main__":
     print("Current position:", xy.get_current_position())
 
     # Test the ZP stage movement functions
-    zp.movecommand({'X': 10, 'Y': 20, 'Z': 30, 'E': 40})
+    zp.move_relative({'X': 10, 'Y': 20, 'Z': 30, 'E': 40})
     time.sleep(1)
-    zp.movecommand({'X': 0, 'Y': 0, 'Z': 0, 'E': 0})
+    zp.move_relative({'X': 0, 'Y': 0, 'Z': 0, 'E': 0})
     time.sleep(1)
     print("Current position:", zp.get_current_position())
 

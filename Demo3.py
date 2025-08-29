@@ -115,7 +115,7 @@ def handle_calibrate(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dic
     save_calibration_config(config)
 
 
-def handle_goto_well(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dict, config: dict):
+#def handle_goto_well(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dict, config: dict):
     """
     Move to a specific well position with calibration applied.
     Usage: GOTO_WELL A1 (moves to well A1 with offsets applied)
