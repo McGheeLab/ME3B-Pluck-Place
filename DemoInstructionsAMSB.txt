@@ -1,0 +1,47 @@
+# Demo3 Command File with Calibration Support
+# This file contains commands for the ME3B Pluck-Place system
+# Lines starting with # are comments and will be ignored
+# Empty lines are also ignored
+
+# CALIBRATION WORKFLOW:
+# 1. Move needle to your desired reference position manually
+# 2. Run HOME to set current position as software (0,0,0)
+# 3. Run CALIBRATE to save this reference to config file
+# 4. Future runs: LOAD_CONFIG + GOTO 0,0,0 returns to exact same position
+
+# FIRST TIME SETUP (do this once):
+# Move manually to desired needle reference position, then:
+# HOME                    # Set current position as software (0,0,0)
+# CALIBRATE              # Save HOME reference to config file
+ 
+# SUBSEQUENT RUNS (every other time):
+ LOAD_CONFIG calibration_config.json  
+ GOTO -4386.0,-20485.0,0   
+
+# Moves the syringe up to allow stage movement
+GOTO 0,0,25                         
+
+# Moves the syringe up to allow stage movement
+GOTO 0,0,-25
+
+# Use calibrated well positions with automatic offsets  
+# GOTO_WELL A1
+
+# Pick operation - moves syringe volume up 
+# PICK 2.5,0,0
+
+# Move to another well position
+# GOTO_WELL B2
+
+# Place operation - moves syringe volume down
+# PLACE 2.5,0,0
+
+# Manual positioning still works alongside calibration
+# GOTO 4,10,-10
+
+# Return to calibrated reference position
+# GOTO 0,0,0
+
+# Additional well movements (uncomment as needed):
+# GOTO_WELL A2
+# GOTO_WELL B1
