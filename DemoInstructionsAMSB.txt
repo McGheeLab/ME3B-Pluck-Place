@@ -1,4 +1,4 @@
-# Demo3 Command File with Calibration Support
+# DeviceInterfaceAMSB Command File with Calibration Support
 # This file contains commands for the ME3B Pluck-Place system
 # Lines starting with # are comments and will be ignored
 # Empty lines are also ignored
