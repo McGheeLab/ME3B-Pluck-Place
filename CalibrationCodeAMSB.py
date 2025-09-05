@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple command-line interface for device control using DeviceInterfaceAMSB.py, added Calibration functions
+Simple command-line interface for device control using DeviceInterface.py, added Calibration functions
 
 Commands:
   GOTO X,Y,Z      -- Move XY stage by X,Y and printer Z axis by Z relative to current positions
@@ -59,7 +59,7 @@ def map_printer_moves(z=0.0, p1=0.0, p2=0.0, p3=0.0):
 
 ################################# Calibration Functions ##################################
 
-def load_calibration_config(config_file="CalibrationConfigAMSB.json"):
+def load_calibration_config(config_file="calibration_config.json"):
     """Load calibration configuration from JSON file."""
     try:
         with open(config_file, 'r') as f:
@@ -74,7 +74,7 @@ def load_calibration_config(config_file="CalibrationConfigAMSB.json"):
         return None
 
 
-def save_calibration_config(config, config_file="CalibrationConfigAMSB.json"):
+def save_calibration_config(config, config_file="calibration_config.json"):
     """Save calibration configuration to JSON file."""
     try:
         # Update timestamp
@@ -148,7 +148,7 @@ def handle_calibrate(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dic
     
     # Move to position
     xy.move_stage_to_position(target_x, target_y)
-    zp.movecommand(map_printer_moves(z=target_z - state['z']))
+    zp.move_relative(map_printer_moves(z=target_z - state['z']))
     
     # Update state
     state.update(x=well_pos["x"], y=well_pos["y"], z=target_z)
@@ -163,7 +163,7 @@ def handle_load_config(arg_str, config_dict):
     """
     config_file = arg_str.strip()
     if not config_file:
-        config_file = "CalibrationConfigAMSB.json"
+        config_file = "calibration_config.json"
     
     new_config = load_calibration_config(config_file)
     if new_config:
@@ -190,7 +190,7 @@ def handle_goto(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dict, co
         target_z = needle_ref["z"]
         
         xy.move_stage_to_position(target_x, target_y)
-        zp.movecommand(map_printer_moves(z=target_z - state['z']))
+        zp.move_relative(map_printer_moves(z=target_z - state['z']))
         
         # Update state to show we're at software (0,0,0)
         state.update(x=0.0, y=0.0, z=0.0)
@@ -212,7 +212,7 @@ def handle_goto(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dict, co
             # Fallback to relative movement from current position
             xy.move_stage_to_position(tx, ty)
         
-        zp.movecommand(map_printer_moves(z=dz))
+        zp.move_relative(map_printer_moves(z=dz))
         # Update state
         state.update(x=tx, y=ty, z=tz)
         print(f"GOTO executed: software position X={tx}, Y={ty}, Z={tz}")
@@ -225,7 +225,7 @@ def handle_pick(arg_str, zp: ZPStageManager, state: dict):
         print("Syntax: PICK P1,P2,P3")
         return
     # Move printer axes negatively via mapping function
-    zp.movecommand(map_printer_moves(p1=-p1, p2=-p2, p3=-p3))
+    zp.move_relative(map_printer_moves(p1=-p1, p2=-p2, p3=-p3))
     # Update state
     state['p1'] -= p1
     state['p2'] -= p2
@@ -240,7 +240,7 @@ def handle_place(arg_str, zp: ZPStageManager, state: dict):
         print("Syntax: PLACE P1,P2,P3")
         return
     # Move printer axes using mapping function
-    zp.movecommand(map_printer_moves(p1=p1, p2=p2, p3=p3))
+    zp.move_relative(map_printer_moves(p1=p1, p2=p2, p3=p3))
     # Update state
     state['p1'] += p1
     state['p2'] += p2
@@ -273,16 +273,16 @@ def print_help():
 
 
 def main():
-    # Run CameraFeed.py first and wait for it to close
+    # Run CameraFeedAMSB.py first and wait for it to close
     import subprocess
     import sys
-    print("Launching CameraFeed.py for calibration...")
+    print("Launching CameraFeedAMSB.py for calibration...")
     subprocess.run([sys.executable, "CameraFeedAMSB.py"])
 
     # Check for command line argument (filename)
     if len(sys.argv) != 2:
-        print("Usage: python CalibrationCodeAMSB <command_file>")
-        print("Example: python CalibrationCodeAMSB DemoInstructionsAMSB.txt")
+        print("Usage: python CalibrationCodeAMSB.py <command_file>")
+        print("Example: python CalibrationCodeAMSB.py demo3instructions.txt")
         return
 
     filename = sys.argv[1]

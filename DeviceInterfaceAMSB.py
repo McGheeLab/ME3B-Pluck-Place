@@ -140,11 +140,6 @@ class XYStageManager:
         Query the stage for its current position.
         Returns a tuple (x, y, z) or (None, None, None) if parsing fails.
         """
-        # Check if serial port is open before sending command
-        if not self.simulate and (not self.spo or not hasattr(self.spo, 'is_open') or not self.spo.is_open):
-            print("Error: Serial port is not open. Cannot query position.")
-            return None, None, None
-
         # Send the position query command 'P'
         response = self.send_command("P")
 
@@ -447,19 +442,6 @@ class ZPStageManager:
         # change back to slow feedrate by default
         self.set_slow_mode()
     
-    def movecommand(self, axes, feedrate=None):
-        # Build a G0 command string for axes that have a non-zero distance
-        filtered_axes = {
-            axis: distance for axis, distance in axes.items() if distance != 0
-        }
-        axis_str = " ".join(f"{axis}{distance}" for axis, distance in filtered_axes.items())
-        # If a feed rate is specified, include it. Otherwise just move.
-        if feedrate is not None:
-            self.send_data(f"G0 F{feedrate} {axis_str}")
-            print(f"G0 F{feedrate} {axis_str}")
-        else:
-            self.send_data(f"G0 {axis_str}")
-            print(f"G0 {axis_str}")
     ################################# Printer Request Functions ########################################
         
     def get_current_position(self):
