@@ -94,7 +94,7 @@ class XYStageManager:
                 response = spo.readline().decode('ascii').strip()
                 print(f"Response from {port.device}: {response}")
                 # If response indicates a ProScan III controller, return this serial object
-                if "R" in response:
+                if "E" in response or "R" in response or "ProScan" in response:
                     print(f"ProScan III controller found on {port.device}")
                     return spo
 
