@@ -59,7 +59,7 @@ def map_printer_moves(z=0.0, p1=0.0, p2=0.0, p3=0.0):
 
 ################################# Calibration Functions ##################################
 
-def load_calibration_config(config_file="calibration_config.json"):
+def load_calibration_config(config_file="CalibrationConfigAMSB.json"):
     """Load calibration configuration from JSON file."""
     try:
         with open(config_file, 'r') as f:
@@ -74,7 +74,7 @@ def load_calibration_config(config_file="calibration_config.json"):
         return None
 
 
-def save_calibration_config(config, config_file="calibration_config.json"):
+def save_calibration_config(config, config_file="CalibrationConfigAMSB.json"):
     """Save calibration configuration to JSON file."""
     try:
         # Update timestamp
@@ -163,7 +163,7 @@ def handle_load_config(arg_str, config_dict):
     """
     config_file = arg_str.strip()
     if not config_file:
-        config_file = "calibration_config.json"
+        config_file = "CalibrationConfigAMSB.json"
     
     new_config = load_calibration_config(config_file)
     if new_config:
@@ -282,7 +282,7 @@ def main():
     # Check for command line argument (filename)
     if len(sys.argv) != 2:
         print("Usage: python CalibrationCodeAMSB.py <command_file>")
-        print("Example: python CalibrationCodeAMSB.py demo3instructions.txt")
+        print("Example: python CalibrationCodeAMSB.py DemoInstructionsAMSB.txt")
         return
 
     filename = sys.argv[1]
