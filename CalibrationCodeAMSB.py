@@ -13,7 +13,7 @@ import re
 import json
 import os
 from datetime import datetime
-from DeviceInterface import XYStageManager, ZPStageManager
+from DeviceInterfaceAMSB import XYStageManager, ZPStageManager
 
 
 def parse_floats(arg_str, count):
@@ -273,16 +273,16 @@ def print_help():
 
 
 def main():
-    # Run CameraFeed.py first and wait for it to close
+    # Run CameraFeedAMSB.py first and wait for it to close
     import subprocess
     import sys
-    print("Launching CameraFeed.py for calibration...")
-    subprocess.run([sys.executable, "CameraFeed.py"])
+    print("Launching CameraFeedAMSB.py for calibration...")
+    subprocess.run([sys.executable, "CameraFeedAMSB.py"])
 
     # Check for command line argument (filename)
     if len(sys.argv) != 2:
-        print("Usage: python Demo3.py <command_file>")
-        print("Example: python Demo3.py demo3instructions.txt")
+        print("Usage: python CalibrationCodeAMSB.py <command_file>")
+        print("Example: python CalibrationCodeAMSB.py demo3instructions.txt")
         return
 
     filename = sys.argv[1]
