@@ -1,12 +1,10 @@
 {
   "calibration_info": {
-    "date": "2025-08-29",
+    "date": "2025-09-08",
     "operator": "user",
     "description": "Default calibration configuration for ME3B Pluck-Place system"
   },
-
   
-
   "ZERO POINT REFERENCE FROM THE STAGE COORDINATES: DO NOT CHANGE": {
     "x": -12035.0,
     "y": -5268.0,

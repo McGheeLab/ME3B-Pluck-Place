@@ -287,6 +287,18 @@ def main():
 
     filename = sys.argv[1]
 
+    # Prompt user to remove cameras and add well plate
+    print("Remove the cameras and add in your well plate. Once finished press yes to run the txt file.")
+    while True:
+        user_input = input("Continue? (Y/N): ").strip().upper()
+        if user_input == 'Y':
+            break
+        elif user_input == 'N':
+            print("Exiting program.")
+            return
+        else:
+            print("Please enter Y to continue or N to exit.")
+
     # Load calibration configuration
     calibration_config = load_calibration_config()
     if not calibration_config:
@@ -303,6 +315,7 @@ def main():
 
     print(f"Processing commands from: {filename}")
 
+    import time
     try:
         with open(filename, 'r') as file:
             for line_num, line in enumerate(file, 1):
@@ -328,6 +341,13 @@ def main():
                     handle_home(xy, zp, state, reference)
                 elif cmd == 'LOAD_CONFIG':
                     handle_load_config(args, calibration_config)
+                elif cmd == 'DELAY':
+                    try:
+                        delay_seconds = float(args)
+                        print(f"Delaying for {delay_seconds} seconds...")
+                        time.sleep(delay_seconds)
+                    except ValueError:
+                        print(f"Invalid DELAY argument: {args}")
                 else:
                     print(f"  WARNING: Unknown command: {cmd}")
 
