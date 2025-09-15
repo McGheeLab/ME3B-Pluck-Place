@@ -8,7 +8,7 @@
   "ZERO POINT REFERENCE FROM THE STAGE COORDINATES: DO NOT CHANGE": {
     "x": -12035.0,
     "y": -5268.0,
-    "z": 0.0,
+    "z": 10.0, 
     "description": "Needle (0,0,0) reference position - all other positions relative to this"
   },
   "well_plate_positions": {

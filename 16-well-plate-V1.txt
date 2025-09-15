@@ -1,8 +1,8 @@
-# DeviceInterfaceAMSB Command File with Calibration Support
+# 16 Well Plate Calibration Code 
 # This file contains commands for the ME3B Pluck-Place system
 
-# CALIBRATION WORKFLOW:
-# 1. Move needle to your desired reference position manually
+# CALIBRATION WORKFLOW:ece
+# 1. Move needle to your desired reference position manually 
 # 2. Run HOME to set current position as software (0,0,0)
  
  
