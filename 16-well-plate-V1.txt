@@ -9,85 +9,20 @@
 # Automatically ran by CalibrationCodeAMSB.py:
 LOAD_CONFIG CalibrationConfigAMSB.json
 
-# Always add this after calibration because that brings needle into center of camera
-GOTO -12035.0,-5268.0,0   
-
-# Moves the needle down
-GOTO 0,0,-10
+# Always add this after calibration because that brings needle into center of the 16 well plate row 2 from the bottom, column 3 from the left 
+GOTO 4930,-14174,0   
 DELAY 10
 
-# XY stage moves in a circle (radius 5000, 8 points)
-GOTO 5000,0,0
-GOTO 0,0,-2
-DELAY 2
-PLACE 0.05,0,0
-DELAY 1
-GOTO 0,0,2
-DELAY 1
+# Moves the needle down
+GOTO 0,0,-20
+DELAY 10
 
-GOTO 3535,3535,0
-GOTO 0,0,-2
-DELAY 2
-PLACE 0.05,0,0
-DELAY 1
-GOTO 0,0,2
-DELAY 1
+# Moves the needle to the very bottom of the well plate 
 
-GOTO 0,5000,0
-GOTO 0,0,-2
-DELAY 2
-PLACE 0.05,0,0
-DELAY 1
-GOTO 0,0,2
-DELAY 1
+GOTO 0,0,-11.4
+# DELAY 2
+# PLACE 0.05,0,0
+# DELAY 1
+# GOTO 0,0,2
+# DELAY 1
 
-GOTO -3535,3535,0
-GOTO 0,0,-2
-DELAY 2
-PLACE 0.05,0,0
-DELAY 1
-GOTO 0,0,2
-DELAY 1
-
-GOTO -5000,0,0
-GOTO 0,0,-2
-DELAY 2
-PLACE 0.05,0,0
-DELAY 1
-GOTO 0,0,2
-DELAY 1
-
-GOTO -3535,-3535,0
-GOTO 0,0,-2
-DELAY 2
-PLACE 0.05,0,0
-DELAY 1
-GOTO 0,0,2
-DELAY 1
-
-GOTO 0,-5000,0
-GOTO 0,0,-2
-DELAY 2
-PLACE 0.05,0,0
-DELAY 1
-GOTO 0,0,2
-DELAY 1
-
-GOTO 3535,-3535,0
-GOTO 0,0,-2
-DELAY 2
-PLACE 0.05,0,0
-DELAY 1
-GOTO 0,0,2
-DELAY 1
-
-GOTO 5000,0,0
-GOTO 0,0,-2
-DELAY 2
-PLACE 0.05,0,0
-DELAY 1
-GOTO 0,0,2
-DELAY 1
-
-GOTO 0,0,10
-DELAY 20

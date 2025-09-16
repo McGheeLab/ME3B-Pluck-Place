@@ -229,7 +229,7 @@ def start_camera_feed_with_calibration():
     def movement_thread_func():
         nonlocal calibration_accepted
         while movement_thread_running:
-            user_input = input("*((-4386.0,-20485.0,0) = 0,0,0) Enter movement command (GOTO, PICK, PLACE, HOME): ").strip()
+            user_input = input("*((-2405,-18918,0) = 0,0,0) Enter movement command (GOTO, PICK, PLACE, HOME): ").strip()
             if not movement_thread_running:
                 break
             if user_input:
@@ -413,7 +413,7 @@ def print_help():
     print("  PICK P1,P2,P3   -- printer X/Y/E +")
     print("  PLACE P1,P2,P3  -- printer X/Y/E -")
     print("  HOME            -- set reference zero")
-#    print("  EXIT, QUIT      -- exit program")
+    print("REMEMBER: Enter GOTO 0,0,20 before continuing, the txt files are calibrated to this point")
 
 
 def main():
