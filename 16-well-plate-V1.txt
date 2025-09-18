@@ -1,28 +1,74 @@
-# 16 Well Plate Calibration Code 
+
+#  --- 16 Well Plate Calibration Code --- 
 # This file contains commands for the ME3B Pluck-Place system
 
-# CALIBRATION WORKFLOW:ece
-# 1. Move needle to your desired reference position manually 
-# 2. Run HOME to set current position as software (0,0,0)
+
+
+# --- Circular well plate coordinates - 15th well plate (Counting wells top right to top left then down) --- 
+# Center of the well: 7395.0, -13043.0,0
+# Rightmost corner of the well: 454.0, -13043.0, 0
+# Leftmost corner of the well: 14336.0, -13043.0, 0 
+# Top Corner: 5044, -7268, 0
+# Bottom Corner: 7395.0, -19984.0, 0
+
+
+#  --- Circular well plate coordinates - 16th well plate (Counting wells top right to top left then down) --- 
+# Center of the well: -12048.0, -13043.0, 0
+# Rightmost corner of the well: -12689.0, -13043.0, 0
+# Leftmost corner of the well: -11407.0, -13043.0, 0
+# Top Corner: -12358.0, -7268.0, 0
+# Bottom Corner: -12048.0, -19984.0, 0
  
- 
-# Automatically ran by CalibrationCodeAMSB.py:
+
+# --- Automatically ran by CalibrationCodeAMSB.py --- 
 LOAD_CONFIG CalibrationConfigAMSB.json
 
-# Always add this after calibration because that brings needle into center of the 16 well plate row 2 from the bottom, column 3 from the left 
-GOTO 4930,-14174,0   
-DELAY 10
+# Center
+Delay 3
+GOTO 7395.0,-13043.0,0
+DELAY 5
+GOTO 7395.0,-13043.0,-10
+Delay 10
+GOTO 7395.0,-13043.0,-19
+Delay 10
+GOTO 7395.0,-13043.0,19
+Delay 10
 
-# Moves the needle down
-GOTO 0,0,-20
-DELAY 10
+# --- Absolute GOTO commands for the 5 key circle points (15th well) ---
+# Rightmost
+GOTO 454,-13043,0
+DELAY 1
+# Leftmost
+GOTO 14336.0,-13043.0,0
+DELAY 1
+# Top
+GOTO 7395.0,-6102.0,0
+DELAY 1
+# Bottom
+GOTO 7395.0,-19984.0,0
+DELAY 1
+# Center
+GOTO 7395.0,-13043.0,0
+DELAY 1
 
-# Moves the needle to the very bottom of the well plate 
+# --- Absolute GOTO commands for the 5 key circle points (16th well) --- 
+# Rightmost
+GOTO -12689.0,-13043.0,0
+DELAY 1
+# Leftmost
+GOTO -11407.0,-13043.0,0
+DELAY 1
+# Top
+GOTO -12048.0,-7268.0,0
+DELAY 1
+# Bottom
+GOTO -12048.0,-19984.0,0
+DELAY 1
+# Center
+GOTO -12048.0,-13043.0,20
+DELAY 1
 
-GOTO 0,0,-11.4
-# DELAY 2
-# PLACE 0.05,0,0
-# DELAY 1
-# GOTO 0,0,2
-# DELAY 1
+
+
+
 

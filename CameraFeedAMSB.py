@@ -229,7 +229,7 @@ def start_camera_feed_with_calibration():
     def movement_thread_func():
         nonlocal calibration_accepted
         while movement_thread_running:
-            user_input = input("*((-2405,-18918,0) = 0,0,0) Enter movement command (GOTO, PICK, PLACE, HOME): ").strip()
+            user_input = input("-2405,-18918,0 = Calibration Point. Enter movement command (GOTO, PICK, PLACE, POSITION, HOME): ").strip()
             if not movement_thread_running:
                 break
             if user_input:
@@ -240,6 +240,8 @@ def start_camera_feed_with_calibration():
                     handle_pick(args, zp, state)
                 elif cmd == 'PLACE':
                     handle_place(args, zp, state)
+                elif cmd == 'POSITION':
+                    handle_position(xy, zp, state, reference)
                 elif cmd == 'HOME':
                     handle_home(xy, zp, state, reference)
                     print("\nCalibration ACCEPTED via HOME command")
@@ -337,19 +339,17 @@ def map_printer_moves(z=0.0, p1=0.0, p2=0.0, p3=0.0):
 
 def handle_goto(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dict):
     try:
-        dx, dy, dz = parse_floats(arg_str, 3)
+        x, y, dz = parse_floats(arg_str, 3)
     except ValueError:
         print("Syntax: GOTO X,Y,Z")
         return
-    # Compute new stage positions
-    tx = state['x'] + dx
-    ty = state['y'] + dy
-    # Move XY stage and printer Z axis
-    xy.move_stage_to_position(tx, ty)
+    # Move XY stage to absolute position (pure GOTO)
+    xy.move_stage_to_position(x, y)
+    # Move printer Z axis additively
     zp.move_relative(map_printer_moves(z=dz))
-    # Update state
-    state.update(x=tx, y=ty, z=state['z'] + dz)
-    print(f"GOTO executed: stage X={tx}, Y={ty}; printer Z={state['z']}")
+    # Update state: X and Y are now absolute, Z is additive
+    state.update(x=x, y=y, z=state['z'] + dz)
+    print(f"GOTO executed: stage X={x}, Y={y}; printer Z={state['z']}")
 
 
 def handle_pick(arg_str, zp: ZPStageManager, state: dict):
@@ -358,8 +358,9 @@ def handle_pick(arg_str, zp: ZPStageManager, state: dict):
     except ValueError:
         print("Syntax: PICK P1,P2,P3")
         return
-    print(f"Sending PICK command: X-={p1}, Y-={p2}, E-={p3}")
+    # Move printer axes negatively via mapping function
     zp.move_relative(map_printer_moves(p1=-p1, p2=-p2, p3=-p3))
+    # Update state
     state['p1'] -= p1
     state['p2'] -= p2
     state['p3'] -= p3
@@ -372,13 +373,21 @@ def handle_place(arg_str, zp: ZPStageManager, state: dict):
     except ValueError:
         print("Syntax: PLACE P1,P2,P3")
         return
-    print(f"Sending PLACE command: X+={p1}, Y+={p2}, E+={p3}")
+    # Move printer axes using mapping function
     zp.move_relative(map_printer_moves(p1=p1, p2=p2, p3=p3))
+    # Update state
     state['p1'] += p1
     state['p2'] += p2
     state['p3'] += p3
-    print(f"PLACE executed: printer X+={p1}, Y+={p2}, E+={p3}")
 
+def handle_position(xy: XYStageManager, zp: ZPStageManager, state: dict, ref: dict):
+    # Read current stage and printer positions
+    x, y, _ = xy.get_current_position()
+    px, py, pz, pe = zp.get_current_position()
+    # Update state and set as reference
+    state.update(x=x, y=y, z=pz, p1=px, p2=py, p3=pe)
+    ref.update(state)
+    print(f"Position: stage X={x}, Y={y}; printer Z={pz}, X={px}, Y={py}, E={pe}")
 
 def handle_home(xy: XYStageManager, zp: ZPStageManager, state: dict, ref: dict):
     # Read current stage and printer positions
@@ -412,6 +421,7 @@ def print_help():
     print("  GOTO X,Y,Z      -- move relative stage and printer Z")
     print("  PICK P1,P2,P3   -- printer X/Y/E +")
     print("  PLACE P1,P2,P3  -- printer X/Y/E -")
+    print("  POSITION        -- show current position")
     print("  HOME            -- set reference zero")
     print("REMEMBER: Enter GOTO 0,0,20 before continuing, the txt files are calibrated to this point")
 
@@ -454,6 +464,8 @@ def main():
                     handle_place(args, zp, state)
                 elif cmd == 'HOME':
                     handle_home(xy, zp, state, reference)
+                elif cmd == 'POSITION':
+                    handle_position(xy, zp, state, reference)
                 else:
                     print(f"  WARNING: Unknown command: {cmd}")
     

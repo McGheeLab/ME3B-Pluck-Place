@@ -1,3 +1,5 @@
+# All lines commented out are code that are no longer needed, but may be useful in future so I did not delete them. this includes the calibration functions and config loading/saving as well as the GOTO_WELL function
+
 #!/usr/bin/env python3
 """
 Simple command-line interface for device control using DeviceInterface.py, added Calibration functions
@@ -59,7 +61,7 @@ def map_printer_moves(z=0.0, p1=0.0, p2=0.0, p3=0.0):
 
 ################################# Calibration Functions ##################################
 
-def load_calibration_config(config_file="CalibrationConfigAMSB.json"):
+# def load_calibration_config(config_file="CalibrationConfigAMSB.json"):
     """Load calibration configuration from JSON file."""
     try:
         with open(config_file, 'r') as f:
@@ -74,7 +76,7 @@ def load_calibration_config(config_file="CalibrationConfigAMSB.json"):
         return None
 
 
-def save_calibration_config(config, config_file="CalibrationConfigAMSB.json"):
+# def save_calibration_config(config, config_file="CalibrationConfigAMSB.json"):
     """Save calibration configuration to JSON file."""
     try:
         # Update timestamp
@@ -89,7 +91,7 @@ def save_calibration_config(config, config_file="CalibrationConfigAMSB.json"):
         return False
 
 
-def handle_calibrate(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dict, config: dict, ref: dict):
+# def handle_calibrate(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dict, config: dict, ref: dict):
     """
     Save the current HOME reference to the calibration config file.
     This allows GOTO 0,0,0 to return to this exact position in future runs.
@@ -156,7 +158,7 @@ def handle_calibrate(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dic
     print(f"GOTO_WELL executed: Moved to {well_name} at relative position X={well_pos['x']}, Y={well_pos['y']}, Z={target_z}")
 
 
-def handle_load_config(arg_str, config_dict):
+# def handle_load_config(arg_str, config_dict):
     """
     Load a specific calibration config file.
     Usage: LOAD_CONFIG <filename> (e.g., LOAD_CONFIG my_calibration.json)
@@ -174,48 +176,19 @@ def handle_load_config(arg_str, config_dict):
     return False
 
 
-def handle_goto(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dict, config: dict, ref: dict):
+def handle_goto(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dict):
     try:
-        dx, dy, dz = parse_floats(arg_str, 3)
+        x, y, dz = parse_floats(arg_str, 3)
     except ValueError:
         print("Syntax: GOTO X,Y,Z")
         return
-    
-    # Check if this is a goto 0,0,0 and we have calibration loaded
-    if dx == 0.0 and dy == 0.0 and dz == 0.0 and config and "needle_reference" in config:
-        # Go to the calibrated reference position
-        needle_ref = config["needle_reference"]
-        target_x = needle_ref["x"]
-        target_y = needle_ref["y"] 
-        target_z = needle_ref["z"]
-        
-        xy.move_stage_to_position(target_x, target_y)
-        zp.move_relative(map_printer_moves(z=target_z - state['z']))
-        
-        # Update state to show we're at software (0,0,0)
-        state.update(x=0.0, y=0.0, z=0.0)
-        print(f"GOTO executed: Moved to calibrated reference (0,0,0)")
-        print(f"Hardware position: X={target_x}, Y={target_y}, Z={target_z}")
-    else:
-        # Normal relative movement
-        tx = state['x'] + dx
-        ty = state['y'] + dy
-        tz = state['z'] + dz
-        
-        # If we have calibration and a hardware reference, calculate absolute positions
-        if config and "needle_reference" in config and 'hw_x' in ref:
-            needle_ref = config["needle_reference"]
-            abs_x = needle_ref["x"] + tx
-            abs_y = needle_ref["y"] + ty
-            xy.move_stage_to_position(abs_x, abs_y)
-        else:
-            # Fallback to relative movement from current position
-            xy.move_stage_to_position(tx, ty)
-        
-        zp.move_relative(map_printer_moves(z=dz))
-        # Update state
-        state.update(x=tx, y=ty, z=tz)
-        print(f"GOTO executed: software position X={tx}, Y={ty}, Z={tz}")
+    # Move XY stage to absolute position (pure GOTO)
+    xy.move_stage_to_position(x, y)
+    # Move printer Z axis additively
+    zp.move_relative(map_printer_moves(z=dz))
+    # Update state: X and Y are now absolute, Z is additive
+    state.update(x=x, y=y, z=state['z'] + dz)
+    print(f"GOTO executed: stage X={x}, Y={y}; printer Z={state['z']}")
 
 
 def handle_pick(arg_str, zp: ZPStageManager, state: dict):
@@ -231,6 +204,7 @@ def handle_pick(arg_str, zp: ZPStageManager, state: dict):
     state['p2'] -= p2
     state['p3'] -= p3
     print(f"PICK executed: printer X-={p1}, Y-={p2}, E-={p3}")
+
 
 
 def handle_place(arg_str, zp: ZPStageManager, state: dict):
@@ -300,8 +274,8 @@ def main():
             print("Please enter Y to continue or N to exit.")
 
     # Load calibration configuration
-    calibration_config = load_calibration_config()
-    if not calibration_config:
+#    calibration_config = load_calibration_config()
+#    if not calibration_config:
         print("Warning: Running without calibration config")
         calibration_config = {}
 
@@ -327,20 +301,20 @@ def main():
 
                 print(f"Line {line_num}: {line.strip()}")
 
-                if cmd == 'CALIBRATE':
-                    handle_calibrate(args, xy, zp, state, calibration_config, reference)
-                elif cmd == 'GOTO':
-                    handle_goto(args, xy, zp, state, calibration_config, reference)
-                elif cmd == 'GOTO_WELL':
-                    handle_goto_well(args, xy, zp, state, calibration_config)
+#                if cmd == 'CALIBRATE':
+#                    handle_calibrate(args, xy, zp, state, calibration_config, reference)
+                if cmd == 'GOTO':
+                    handle_goto(args, xy, zp, state)
+#                elif cmd == 'GOTO_WELL':
+#                    handle_goto_well(args, xy, zp, state, calibration_config)
                 elif cmd == 'PICK':
                     handle_pick(args, zp, state)
                 elif cmd == 'PLACE':
                     handle_place(args, zp, state)
                 elif cmd == 'HOME':
                     handle_home(xy, zp, state, reference)
-                elif cmd == 'LOAD_CONFIG':
-                    handle_load_config(args, calibration_config)
+#                elif cmd == 'LOAD_CONFIG':
+#                    handle_load_config(args, calibration_config)
                 elif cmd == 'DELAY':
                     try:
                         delay_seconds = float(args)
