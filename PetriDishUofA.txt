@@ -1,0 +1,93 @@
+# DeviceInterfaceAMSB Command File with Calibration Support
+# This file contains commands for the ME3B Pluck-Place system
+
+# CALIBRATION WORKFLOW:
+# 1. Move needle to your desired reference position manually
+# 2. Run HOME to set current position as software (0,0,0)
+ 
+ 
+# Automatically ran by CalibrationCodeAMSB.py:
+LOAD_CONFIG CalibrationConfigAMSB.json
+
+# Always add this after calibration because that brings needle into center of camera
+GOTO -12035.0,-5268.0,0   
+
+# Moves the needle down
+GOTO 0,0,-10
+DELAY 10
+
+# XY stage moves in a circle (radius 5000, 8 points)
+GOTO 5000,0,0
+GOTO 0,0,-2
+DELAY 2
+PLACE 0.05,0,0
+DELAY 1
+GOTO 0,0,2
+DELAY 1
+
+GOTO 3535,3535,0
+GOTO 0,0,-2
+DELAY 2
+PLACE 0.05,0,0
+DELAY 1
+GOTO 0,0,2
+DELAY 1
+
+GOTO 0,5000,0
+GOTO 0,0,-2
+DELAY 2
+PLACE 0.05,0,0
+DELAY 1
+GOTO 0,0,2
+DELAY 1
+
+GOTO -3535,3535,0
+GOTO 0,0,-2
+DELAY 2
+PLACE 0.05,0,0
+DELAY 1
+GOTO 0,0,2
+DELAY 1
+
+GOTO -5000,0,0
+GOTO 0,0,-2
+DELAY 2
+PLACE 0.05,0,0
+DELAY 1
+GOTO 0,0,2
+DELAY 1
+
+GOTO -3535,-3535,0
+GOTO 0,0,-2
+DELAY 2
+PLACE 0.05,0,0
+DELAY 1
+GOTO 0,0,2
+DELAY 1
+
+GOTO 0,-5000,0
+GOTO 0,0,-2
+DELAY 2
+PLACE 0.05,0,0
+DELAY 1
+GOTO 0,0,2
+DELAY 1
+
+GOTO 3535,-3535,0
+GOTO 0,0,-2
+DELAY 2
+PLACE 0.05,0,0
+DELAY 1
+GOTO 0,0,2
+DELAY 1
+
+GOTO 5000,0,0
+GOTO 0,0,-2
+DELAY 2
+PLACE 0.05,0,0
+DELAY 1
+GOTO 0,0,2
+DELAY 1
+
+GOTO 0,0,10
+DELAY 20
