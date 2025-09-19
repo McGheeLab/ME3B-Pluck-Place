@@ -233,6 +233,14 @@ def handle_home(xy: XYStageManager, zp: ZPStageManager, state: dict, ref: dict):
     print(f"HOME set: Current position is now software (0,0,0)")
     print(f"Hardware reference: stage X={x}, Y={y}; printer Z={pz}")
 
+# This is the experimental FEEDRATE command to adjust printer speed
+def handle_feedrate(arg_str, zp: ZPStageManager):
+    try:
+        feedrate = float(arg_str.strip())
+    except ValueError:
+        print("Syntax: FEEDRATE <number>")
+        return
+    zp.set_max_feedrate(feedrate)
 
 def print_help():
     print("Available commands:")
@@ -313,6 +321,11 @@ def main():
                     handle_place(args, zp, state)
                 elif cmd == 'HOME':
                     handle_home(xy, zp, state, reference)
+                # Experimental FEEDRATE command
+                elif cmd == 'FEEDRATE':
+                    handle_feedrate(args, zp)
+                #################################    
+                    
 #                elif cmd == 'LOAD_CONFIG':
 #                    handle_load_config(args, calibration_config)
                 elif cmd == 'DELAY':

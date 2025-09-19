@@ -1,0 +1,4 @@
+Test FEEDRATE File 
+
+GOTO 0,0,0
+FEEDRATE 100
