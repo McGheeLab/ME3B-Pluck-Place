@@ -285,6 +285,7 @@ class ZPStageManager:
         self.x_cnt = 0.0
         self.y_cnt = 0.0
         self.z_cnt = 0.0
+        self.feedrate = 200  # Default feedrate in mm/min
 
         # General settings for communication and state
         self.verbose = False
@@ -294,7 +295,7 @@ class ZPStageManager:
         self.COM = None
 
         # If in simulate mode, use the ZPStageSimulator instead of real hardware
-        if simulate:
+        if self.simulate:
             self.serial = ZPStageSimulator()
             self.serial.start()
             self.setup()
@@ -332,27 +333,27 @@ class ZPStageManager:
             self.serial.stop()
         else:
             self.serial.close()
-            
+     
+    def set_max_feedrate(self, feedrate):
+        self.feedrate = feedrate
+        self.send_data(f"M203 E{feedrate} Y{feedrate} X{feedrate} Z{feedrate}")
+        print(f"Set max feedrate to {feedrate} mm/min for all axes")
+
     # Setup the printer for operation
     def setup(self):
         # Prepare printer for normal operation
         step_per_mm = 78040
-        # The original fedrate is 200 mm/min, but I am adjusting it to adjust z speed 
-        max_feedrate = 200  # mm/min, example calculation
-
+        # The original feedrate is 200 mm/min, but we use self.feedrate
         self.send_data("M302 S0")  # Allow cold extrusion
         self.send_data("M83")      # Set extruder to relative mode
         self.send_data("G91")      # Set XYZ to relative positioning
-        self.send_data(f"M203 E{max_feedrate} Y{max_feedrate} X{max_feedrate} Z{max_feedrate}")  # Set max feedrates
+        self.send_data(f"M203 E{self.feedrate} Y{self.feedrate} X{self.feedrate} Z{self.feedrate}")  # Set max feedrates
         self.send_data("M92 X5069.00 Y5069.00 Z-5069.00 E5069.00")  # Configure steps per unit
         # set feedrate to max
-        self.send_data(f"G0 F{max_feedrate}")  # Set feedrate to max
+        self.send_data(f"G0 F{self.feedrate}")  # Set feedrate to max
         self.send_data("M220 S100")  # Set feedrate to 100%
 
-    # Experimental function to make max feedrate adjustable
-    def set_max_feedrate(self, feedrate):
-        self.send_data(f"M203 E{feedrate} Y{feedrate} X{feedrate} Z{feedrate}")
-        print(f"Set max feedrate to {feedrate} mm/min for all axes")
+    # (Removed duplicate set_max_feedrate)
 
     ################################# Communication Functions ########################################
     
@@ -417,12 +418,11 @@ class ZPStageManager:
         axis_str = " ".join(f"{axis}{distance}" for axis, distance in filtered_axes.items())
 
         # If a feed rate is specified, include it. Otherwise just move.
-        if feedrate is not None:
-            self.send_data(f"G0 F{feedrate} {axis_str}")
-            print(f"G0 F{feedrate} {axis_str}")
-        else:
-            self.send_data(f"G0 {axis_str}")
-            print(f"G0 {axis_str}")
+        if feedrate is None:
+            feedrate = self.feedrate
+        # ...existing code...
+        self.send_data(f"G0 F{feedrate} {axis_str}")
+        print(f"G0 F{feedrate} {axis_str}")
     
     def move_absolute(self, axes, fast=False):
         
