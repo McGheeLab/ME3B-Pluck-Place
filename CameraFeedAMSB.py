@@ -1,9 +1,14 @@
+
 import sys
 import cv2
 import numpy as np
 import time
 import re
 from DeviceInterfaceAMSB import XYStageManager, ZPStageManager
+
+# ------------------- Shared Stage Managers -------------------
+xy = XYStageManager(simulate=False)
+zp = ZPStageManager(simulate=False)
 
 # ------------------- Global Calibration Parameters -------------------
 gamma = 1.0       # Gamma correction
@@ -216,9 +221,8 @@ def start_camera_feed_with_calibration():
     print("Press Y to accept calibration.")
     print("="*60)
     
+
     import threading
-    xy = XYStageManager(simulate=False)
-    zp = ZPStageManager(simulate=False)
     state = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'p1': 0.0, 'p2': 0.0, 'p3': 0.0}
     reference = state.copy()
     frame_count = 0
@@ -346,11 +350,11 @@ def handle_goto(arg_str, xy: XYStageManager, zp: ZPStageManager, state: dict):
         return
     # Move XY stage to absolute position (pure GOTO)
     xy.move_stage_to_position(x, y)
-    # Move printer Z axis additively
-    zp.move_relative(map_printer_moves(z=dz))
+    # Move printer Z axis additively, using current feedrate
+    zp.move_relative(map_printer_moves(z=dz), feedrate=zp.feedrate)
     # Update state: X and Y are now absolute, Z is additive
     state.update(x=x, y=y, z=state['z'] + dz)
-    print(f"GOTO executed: stage X={x}, Y={y}; printer Z={state['z']}")
+    print(f"GOTO executed: stage X={x}, Y={y}; printer Z={state['z']} (feedrate={zp.feedrate})")
 
 
 def handle_pick(arg_str, zp: ZPStageManager, state: dict):
@@ -359,13 +363,13 @@ def handle_pick(arg_str, zp: ZPStageManager, state: dict):
     except ValueError:
         print("Syntax: PICK P1,P2,P3")
         return
-    # Move printer axes negatively via mapping function
-    zp.move_relative(map_printer_moves(p1=-p1, p2=-p2, p3=-p3))
+    # Move printer axes negatively via mapping function, using current feedrate
+    zp.move_relative(map_printer_moves(p1=-p1, p2=-p2, p3=-p3), feedrate=zp.feedrate)
     # Update state
     state['p1'] -= p1
     state['p2'] -= p2
     state['p3'] -= p3
-    print(f"PICK executed: printer X-={p1}, Y-={p2}, E-={p3}")
+    print(f"PICK executed: printer X-={p1}, Y-={p2}, E-={p3} (feedrate={zp.feedrate})")
 
 
 def handle_place(arg_str, zp: ZPStageManager, state: dict):
@@ -374,12 +378,13 @@ def handle_place(arg_str, zp: ZPStageManager, state: dict):
     except ValueError:
         print("Syntax: PLACE P1,P2,P3")
         return
-    # Move printer axes using mapping function
-    zp.move_relative(map_printer_moves(p1=p1, p2=p2, p3=p3))
+    # Move printer axes using mapping function, using current feedrate
+    zp.move_relative(map_printer_moves(p1=p1, p2=p2, p3=p3), feedrate=zp.feedrate)
     # Update state
     state['p1'] += p1
     state['p2'] += p2
     state['p3'] += p3
+    print(f"PLACE executed: printer X+={p1}, Y+={p2}, E+={p3} (feedrate={zp.feedrate})")
 
 def handle_position(xy: XYStageManager, zp: ZPStageManager, state: dict, ref: dict):
     # Read current stage and printer positions
@@ -446,9 +451,6 @@ def main():
     
     filename = sys.argv[1]
     
-    # Instantiate managers
-    xy = XYStageManager(simulate=False)
-    zp = ZPStageManager(simulate=False)
 
     # State: stage X,Y; printer Z; P1->printer X, P2->printer Y, P3->printer E
     state = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'p1': 0.0, 'p2': 0.0, 'p3': 0.0}
@@ -456,17 +458,15 @@ def main():
 
     print(f"Processing commands from: {filename}")
     
+
     try:
         with open(filename, 'r') as file:
             for line_num, line in enumerate(file, 1):
                 cmd, args = parse_line(line)
-                
                 # Skip empty lines and comments
                 if cmd is None:
                     continue
-                
                 print(f"Line {line_num}: {line.strip()}")
-                
                 if cmd == 'GOTO':
                     handle_goto(args, xy, zp, state)
                 elif cmd == 'PICK':
@@ -475,20 +475,16 @@ def main():
                     handle_place(args, zp, state)
                 elif cmd == 'HOME':
                     handle_home(xy, zp, state, reference)
-                # Experimental FEEDRATE command
                 elif cmd == 'FEEDRATE':
                     handle_feedrate(args, zp)
-                #################################  
                 elif cmd == 'POSITION':
                     handle_position(xy, zp, state, reference)
                 else:
                     print(f"  WARNING: Unknown command: {cmd}")
-    
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
         print(f"Error processing file: {e}")
-    
     print("Command processing complete.")
 
 if __name__ == '__main__':
