@@ -229,7 +229,7 @@ def start_camera_feed_with_calibration():
     def movement_thread_func():
         nonlocal calibration_accepted
         while movement_thread_running:
-            user_input = input("-2405,-18918,0 = Calibration Point. Enter movement command (GOTO, PICK, PLACE, POSITION, HOME): ").strip()
+            user_input = input("-2405,-18918,0 = Calibration Point. Enter movement command (GOTO, PICK, PLACE, FEEDRATE, POSITION, HOME): ").strip()
             if not movement_thread_running:
                 break
             if user_input:
@@ -247,7 +247,8 @@ def start_camera_feed_with_calibration():
                     print("\nCalibration ACCEPTED via HOME command")
                     calibration_accepted = True
                     break
-                # EXIT and QUIT commands removed
+                elif cmd == 'FEEDRATE':
+                    handle_feedrate(args, zp)
                 elif cmd:
                     print(f"Unknown command: {cmd}")
 
@@ -398,7 +399,15 @@ def handle_home(xy: XYStageManager, zp: ZPStageManager, state: dict, ref: dict):
     ref.update(state)
     print(f"HOME set: stage X={x}, Y={y}; printer Z={pz}, X={px}, Y={py}, E={pe}")
 
-
+# This is the experimental FEEDRATE command to adjust printer speed
+def handle_feedrate(arg_str, zp: ZPStageManager):
+    try:
+        feedrate = float(arg_str.strip())
+    except ValueError:
+        print("Syntax: FEEDRATE <number>")
+        return
+    zp.set_max_feedrate(feedrate)
+    
 def print_help():
     """
     Start camera feed in terminal mode with calibration acceptance option.
@@ -423,6 +432,8 @@ def print_help():
     print("  PLACE P1,P2,P3  -- printer X/Y/E -")
     print("  POSITION        -- show current position")
     print("  HOME            -- set reference zero")
+    print("  FEEDRATE <num>  -- set printer z axis feedrate (mm/min) - Includes pick/place")
+    print("FEEDRATE <200>  -- is the standard speed")
     print("REMEMBER: Enter GOTO 0,0,20 before continuing, the txt files are calibrated to this point")
 
 
@@ -464,6 +475,10 @@ def main():
                     handle_place(args, zp, state)
                 elif cmd == 'HOME':
                     handle_home(xy, zp, state, reference)
+                # Experimental FEEDRATE command
+                elif cmd == 'FEEDRATE':
+                    handle_feedrate(args, zp)
+                #################################  
                 elif cmd == 'POSITION':
                     handle_position(xy, zp, state, reference)
                 else:

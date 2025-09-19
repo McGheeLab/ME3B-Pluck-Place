@@ -337,6 +337,7 @@ class ZPStageManager:
     def setup(self):
         # Prepare printer for normal operation
         step_per_mm = 78040
+        # The original fedrate is 200 mm/min, but I am adjusting it to adjust z speed 
         max_feedrate = 200  # mm/min, example calculation
 
         self.send_data("M302 S0")  # Allow cold extrusion
@@ -347,6 +348,11 @@ class ZPStageManager:
         # set feedrate to max
         self.send_data(f"G0 F{max_feedrate}")  # Set feedrate to max
         self.send_data("M220 S100")  # Set feedrate to 100%
+
+    # Experimental function to make max feedrate adjustable
+    def set_max_feedrate(self, feedrate):
+        self.send_data(f"M203 E{feedrate} Y{feedrate} X{feedrate} Z{feedrate}")
+        print(f"Set max feedrate to {feedrate} mm/min for all axes")
 
     ################################# Communication Functions ########################################
     
