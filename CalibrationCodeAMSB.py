@@ -19,8 +19,9 @@ from datetime import datetime
 from DeviceInterfaceAMSB import XYStageManager, ZPStageManager
 
 # ------------------- Shared Stage Managers -------------------
-xy = XYStageManager(simulate=False)
-zp = ZPStageManager(simulate=False)
+# Initialize these after CameraFeedAMSB.py finishes to avoid port conflicts
+xy = None
+zp = None
 
 
 def parse_floats(arg_str, count):
@@ -266,6 +267,12 @@ def main():
     print("Launching CameraFeedAMSB.py for calibration...")
     subprocess.run([sys.executable, "CameraFeedAMSB.py"])
 
+    # Initialize stage managers AFTER CameraFeedAMSB.py finishes to avoid port conflicts
+    global xy, zp
+    print("Initializing stage managers...")
+    xy = XYStageManager(simulate=False)
+    zp = ZPStageManager(simulate=False)
+
     # Check for command line argument (filename)
     if len(sys.argv) != 2:
         print("Usage: python CalibrationCodeAMSB.py <command_file>")
@@ -335,4 +342,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-11
