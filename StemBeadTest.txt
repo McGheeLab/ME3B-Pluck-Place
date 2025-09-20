@@ -6,16 +6,16 @@ FEEDRATE 200
 GOTO 7395.0,-13043.0,0
 DELAY 5
 
-# Rightmost
-GOTO 454,-13043,0
+# TOPMOST
+GOTO 7634,-8529,0
 DELAY 2
 
 # Plunge to the top of the well system 
-GOTO 454,-13043,-10
+GOTO 7634,-8529,-10
 Delay 6
 
 # Plunge to the bottom of the well system 
-GOTO 454,-13043,-19
+GOTO 7634,-8529,-19
 Delay 6
 
 # Set desired feedrate 
@@ -37,5 +37,5 @@ PLACE 0.1,0,0
 Delay 3
 
 # Return to original position 
-GOTO 7395.0,-13043.0,29
+GOTO 7634,-8529,29
 Delay 20
