@@ -1,28 +1,41 @@
 #### First ME3B Application Test for Gabe ####
-# Uses a 27 guage needle 
+# Uses a 22 guage needle 
 
 FEEDRATE 200
 
 # Center
-GOTO 7395.0,-13043.0,0
+GOTO 7558,-13043.0,0
 DELAY 5
 
 # Plunge to the top of the well system 
-GOTO 7903,-7280,-11
+GOTO 7558,-7514,-12
 Delay 6
 
+# Slightly below top to push needle onto wall on the next step 
+GOTO 7558,-7514,-3
+Delay 2
+
 # Plunge to the bottom of the well system 
-GOTO 7903,-7280,-18
+GOTO 7558,-5878,-15
 Delay 6
 
 # Set desired feedrate 
-FEEDRATE 25
+FEEDRATE 200
 Delay 1
 
 # Slow release of stem beads 
-PLACE 1,0,0
+PLACE 0.6,0,0
 Delay 15
 
 # Return to original position 
-GOTO 7903,-7280,29
-Delay 20
+GOTO 7558,-5878,18
+Delay 20pi
+
+# Return to top center
+FEEDRATE 200 
+
+GOTO 7558,-13043.0,12
+Delay 10 
+
+
+
