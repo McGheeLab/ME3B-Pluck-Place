@@ -11,7 +11,7 @@ DELAY 5
 GOTO 7558,-7514,-12
 Delay 6
 
-# Slightly below top to push needle onto wall on the next step 
+# Push needle onto wall 
 GOTO 7558,-7514,-3
 Delay 2
 
@@ -24,17 +24,19 @@ FEEDRATE 200
 Delay 1
 
 # Slow release of stem beads 
-PLACE 0.6,0,0
-Delay 15
+PLACE 1,0,0
+Delay 2
+
+FEEDRATE 20 
 
 # Return to original position 
 GOTO 7558,-5878,18
-Delay 20pi
+Delay 20
 
 # Return to top center
 FEEDRATE 200 
 
-GOTO 7558,-13043.0,12
+GOTO 7558,-5878,12
 Delay 10 
 
 
