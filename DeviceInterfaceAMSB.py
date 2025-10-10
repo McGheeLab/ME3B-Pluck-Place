@@ -84,7 +84,7 @@ class XYStageManager:
             try:
                 # Attempt to open the port at 115200 baud
                 spo = serial.Serial(
-                    port.device, baudrate=115200, bytesize=8,
+                    port.device, baudrate=9600, bytesize=8,
                     timeout=1, stopbits=serial.STOPBITS_ONE
                 )
                 # Write a command ('V') to check for the correct device
