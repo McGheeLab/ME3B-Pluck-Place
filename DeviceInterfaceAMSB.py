@@ -27,7 +27,10 @@ class XYStageManager:
         self.simulate = simulate
         
         self.maxSpeed = 100
-        self.maxAcceleration = 1000
+        self.minJerk = 1
+        self.maxJerk = 100
+        self.minAcceleration = 1
+        self.maxAcceleration = 100
         self.xRange = [-100000, 100000]
         self.yRange = [-100000, 100000]
         self.defaultAcceleration = 1000
@@ -204,7 +207,7 @@ class XYStageManager:
 
         # 2. (Optional) if fast=True, you might adjust speed or step size here
         #    e.g. self.send_command("SS 1\r")   # set stage scale to micro-steps
-        self.send_command("VS,100\r") # set stage speed to 100%
+        # self.send_command("VS,100\r") # set stage speed to 100%
         #    – see “scale stage” (SS) and virtual joystick speed (VS) in §5.1.
 
         # 3. Build and send the absolute move command:
@@ -212,6 +215,26 @@ class XYStageManager:
         cmd = f"G {int(x)},{int(y)}\r"
         self.send_command(cmd)
         print(f"Sent absolute move command: {cmd!r}")
+
+        #wait for completion
+        #read until an 'R' or 'END' is returned.
+        
+        #    e.g.: self.wait_for_response("R")
+
+    def move_stage_relative(self, dx, dy, fast=False):
+        """
+        Move stage by a relative offset (dx, dy) using ProScan III ASCII RS-232 protocol.
+        """
+        # 2. (Optional) if fast=True, you might adjust speed or step size here
+        #    e.g. self.send_command("SS 1\r")   # set stage scale to micro-steps
+        # self.send_command("VS,100\r") # set stage speed to 100%
+        #    – see “scale stage” (SS) and virtual joystick speed (VS) in §5.1.
+
+        # 3. Build and send the relative move command:
+        #    'G x,y<CR>' moves to absolute (x,y)  :contentReference[oaicite:2]{index=2}
+        cmd = f"GR {int(dx)},{int(dy)}\r"
+        self.send_command(cmd)
+        print(f"Sent relative move command: {cmd!r}")
 
         #wait for completion
         #read until an 'R' or 'END' is returned.
@@ -251,6 +274,9 @@ class XYStageManager:
                 settings = json.load(f)
                 stage_settings = settings.get("PriorIII_StageSettings", {})
                 self.maxSpeed = stage_settings.get("maxSpeed")
+                self.minJerk = stage_settings.get("minJerk")
+                self.maxJerk = stage_settings.get("maxJerk")
+                self.minAcceleration = stage_settings.get("minAcceleration")
                 self.maxAcceleration = stage_settings.get("maxAcceleration")
                 self.xRange = stage_settings.get("xRange")
                 self.yRange = stage_settings.get("yRange")
@@ -260,15 +286,28 @@ class XYStageManager:
         except Exception as e:
             print(f"Error loading stage settings: {e}")
     
+    def set_jerk(self, jerk):
+        """
+        Set the stage jerk to the specified value.
+        """
+        # ensure the jerk value is within the valid range
+        if jerk > self.maxJerk or jerk < self.minJerk:
+            print("Error: Jerk value is out of bounds.")
+            return
+        jerk = int(jerk)
+        command = f"SCS,{jerk}"
+        self.send_command(command)
+
     def set_acceleration(self, acceleration):
         """
         Set the stage acceleration to the specified value.
         """
-        # ensure the acceleration value is within the valid range 
-        if acceleration > self.maxAcceleration:
-            print("Error: Acceleration value is too high.")
+        # ensure the acceleration value is within the valid range
+        if acceleration > self.maxAcceleration or acceleration < self.minAcceleration:
+            print("Error: Acceleration value is out of bounds.")
             return
-        command = f"AC,{acceleration}"
+        acceleration = int(acceleration)
+        command = f"SAS,{acceleration}"
         self.send_command(command)
 
     def set_velocity(self, velocity):
@@ -276,12 +315,31 @@ class XYStageManager:
         Set the stage velocity to the specified value.
         """
         # ensure the velocity value is within the valid range
-        if velocity > self.maxSpeed:
-            print("Error: Velocity value is too high.")
+        if velocity > self.maxSpeed or velocity < 0:
+            print("Error: Velocity value is out of bounds.")
             return
-        
-        command = f"VE,{velocity}"
+        velocity = int(velocity)
+        command = f"SMS,{velocity}"
         self.send_command(command)
+
+    def set_baudrate(self, baudrate):
+        """
+        Set the stage communication baudrate to the specified value.
+        """
+        # 9600 = 96
+        baudrate_mapping = {9600: 96, 19200: 19, 38400: 38, 57600: 57, 115200: 115}
+
+        if baudrate not in [9600, 19200, 38400]: #, 57600, 115200]:
+            print("Error: Invalid baudrate. Choose from [9600, 19200, 38400, 57600, 115200].")
+            return
+
+        command = f"BAUD {baudrate_mapping[baudrate]}"
+        self.send_command(command)
+        time.sleep(0.1)  # Wait for the command to be processed
+        if not self.simulate:
+            self.spo.baudrate = baudrate
+            print(f"Baudrate changed to {baudrate}. Please reconnect the serial port if necessary.")
+
 
 class ZPStageManager:
     # This class manages communication with a 3D printer or a simulator for testing
