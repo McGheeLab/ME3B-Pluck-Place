@@ -87,6 +87,15 @@ class XYStageManager:
                     port.device, baudrate=9600, bytesize=8,
                     timeout=1, stopbits=serial.STOPBITS_ONE
                 )
+
+                spo.write(b"STAGE\r\n")  # Wake up the controller
+                time.sleep(0.1) # Wait for the response to be ready
+                response = spo.readline().decode('ascii').strip()
+                print(f"Initial response from {port.device}: {response}")
+                spo.reset_input_buffer()  # Clear any stale data
+                spo.reset_output_buffer() # Clear any stale data
+
+
                 # Write a command ('V') to check for the correct device
                 spo.write(b"V\r\n")
                 time.sleep(0.1) # Wait for the response to be ready
