@@ -52,7 +52,7 @@ def get_teslong_camera_indices():
                 cap.release()
             else:
                 print(f"  Camera {i}: Not available")
-    
+
     if indices:
         print(f"Selected camera indices: {indices}")
     else:
@@ -253,6 +253,8 @@ def start_camera_feed_with_calibration():
                     break
                 elif cmd == 'FEEDRATE':
                     handle_feedrate(args, zp)
+                elif cmd == 'VELOCITY':
+                    handle_velocity(args, xy)
                 elif cmd:
                     print(f"Unknown command: {cmd}")
 
@@ -412,6 +414,16 @@ def handle_feedrate(arg_str, zp: ZPStageManager):
         print("Syntax: FEEDRATE <number>")
         return
     zp.set_max_feedrate(feedrate)
+
+# This is the VELOCITY command to control XY stage movement velocity
+def handle_velocity(arg_str, xy: XYStageManager):
+    try:
+        vx, vy = parse_floats(arg_str, 2)
+    except ValueError:
+        print("Syntax: VELOCITY VX,VY")
+        return
+    xy.move_stage_at_velocity(vx, vy)
+    print(f"VELOCITY executed: XY stage moving at VX={vx}, VY={vy}")
     
 def print_help():
     """
@@ -438,6 +450,7 @@ def print_help():
     print("  POSITION        -- show current position")
     print("  HOME            -- set reference zero")
     print("  FEEDRATE <num>  -- set printer z axis feedrate (mm/min) - Includes pick/place")
+    print("  VELOCITY VX,VY  -- set XY stage velocity (continuous movement)")
     print("FEEDRATE <200>  -- is the standard speed")
     print("REMEMBER: Enter GOTO 0,0,20 before continuing, the txt files are calibrated to this point")
 
@@ -477,6 +490,8 @@ def main():
                     handle_home(xy, zp, state, reference)
                 elif cmd == 'FEEDRATE':
                     handle_feedrate(args, zp)
+                elif cmd == 'VELOCITY':
+                    handle_velocity(args, xy)
                 elif cmd == 'POSITION':
                     handle_position(xy, zp, state, reference)
                 else:

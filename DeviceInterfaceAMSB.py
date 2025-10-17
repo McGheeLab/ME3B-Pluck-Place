@@ -339,6 +339,8 @@ class XYStageManager:
         if not self.simulate:
             self.spo.baudrate = baudrate
             print(f"Baudrate changed to {baudrate}. Please reconnect the serial port if necessary.")
+            
+   
 
 
 class ZPStageManager:

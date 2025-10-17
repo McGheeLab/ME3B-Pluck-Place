@@ -1,0 +1,30 @@
+# A-Shape Drawing Commands - 2 inch tall
+# Assumes 1000 units = 1 inch (adjust scale as needed)
+# Start from calibration point and move to bottom-left of A
+
+# Move to starting position (bottom-left of A)
+GOTO -1000,0,0
+
+# Set a moderate feedrate for smooth drawing
+FEEDRATE 500
+
+# Draw left leg of A (bottom-left to top)
+GOTO 0,2000,0
+
+# Draw right leg of A (top to bottom-right)  
+GOTO 1000,0,0
+
+# Move to middle for crossbar (no Z change)
+GOTO -500,1000,0
+
+# Draw crossbar of A (left to right)
+GOTO 500,1000,0
+
+# Lift and move away from finished A
+GOTO 500,1000,10
+
+# Optional: Return to center
+GOTO 0,1000,0
+
+# Complete A shape drawn
+# Total dimensions: 2000 units wide x 2000 units tall (2" x 2" if 1000 units = 1 inch)
