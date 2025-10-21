@@ -25,7 +25,7 @@ def get_teslong_camera_indices():
     """
     indices = []
 #    print("Scanning for cameras...")
-    
+     
     try:
         from pygrabber.dshow_graph import FilterGraph
         graph = FilterGraph()

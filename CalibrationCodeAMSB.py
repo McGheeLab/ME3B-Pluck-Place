@@ -9,7 +9,7 @@ Commands:
   PICK P1,P2,P3   -- Move printer axes X += P1, Y += P2, E += P3 relative to current positions
   PLACE P1,P2,P3  -- Move printer axes X -= P1, Y -= P2, E -= P3 relative to current positions
   HOME            -- Set current stage X,Y and printer Z,X,Y,E as reference zero
-"""
+""" 
 import sys
 import re
 import json
