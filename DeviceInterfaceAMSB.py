@@ -13,8 +13,8 @@ import json
 # These classes manage the serial communication with the XY and ZP stages
 
 class XYStageManager:
-    """currently this class is build to support PriorIII XY stage and 3D printer ZP stage
-        Common commands for the priorIII stage are:
+    """currently this class is built to support PriorII XY stage
+        Common commands for the priorII stage are:
         V - query firmware version
         P - query current position
         PA,x,y - move to absolute position x,y
