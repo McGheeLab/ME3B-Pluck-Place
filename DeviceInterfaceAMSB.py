@@ -16,6 +16,7 @@ class XYStageManager:
     """currently this class is built to support PriorII XY stage
         Common commands for the priorII stage are:
         V - query firmware version
+        Z - sets the home position as 0,0,0
         P - query current position
         PA,x,y - move to absolute position x,y
         VS,x,y - move at velocity x,y
@@ -193,6 +194,14 @@ class XYStageManager:
                 # On error, print a message and return None for each axis
                 print(f"Error parsing response: {e}")
                 return None, None, None
+            
+    def set_home(self): 
+        """Set the current position as home/reference position for the stage"""
+        response = self.send_command("Z")
+        if response:
+            print(f"HOME command sent, response: {response}")
+        else:
+            print("HOME command sent")
 
     ####################### Stage Movement Functions ##################################
     
@@ -328,6 +337,8 @@ class XYStageManager:
         velocity = int(velocity)
         command = f"SMS,{velocity}"
         self.send_command(command)
+    
+
 
     def set_baudrate(self, baudrate):
         """
@@ -794,6 +805,7 @@ class XYStageSimulator:
         """Return the current position as a tuple (x, y, 0.0)."""
         with self.lock:
             return self.current_x, self.current_y, 0.0
+    
 
     def move_stage_at_velocity(self, vx, vy):
         """Wrapper to send a velocity command."""
