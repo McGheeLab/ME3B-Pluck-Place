@@ -13,9 +13,10 @@ import json
 # These classes manage the serial communication with the XY and ZP stages
 
 class XYStageManager:
-    """currently this class is build to support PriorIII XY stage and 3D printer ZP stage
-        Common commands for the priorIII stage are:
+    """currently this class is built to support PriorII XY stage
+        Common commands for the priorII stage are:
         V - query firmware version
+        Z - sets the home position as 0,0,0
         P - query current position
         PA,x,y - move to absolute position x,y
         VS,x,y - move at velocity x,y
@@ -83,43 +84,50 @@ class XYStageManager:
     def find_proscan_controller(self):
         # Check all available COM ports for a ProScan III controller
         ports = serial.tools.list_ports.comports()
+        
+        # List of baud rates to try (as recommended by ProScan documentation)
+        baud_rates_to_try = [9600, 19200, 38400, 115200]
+        
         for port in ports:
-            try:
-                # Attempt to open the port at 9600 baud
-                spo = serial.Serial(
-                    port.device, baudrate=9600, bytesize=8,
-                    timeout=1, stopbits=serial.STOPBITS_ONE
-                )
+            for baud_rate in baud_rates_to_try:
+                try:
+                    print(f"Trying {port.device} at {baud_rate} baud...")
+                    # Attempt to open the port at current baud rate
+                    spo = serial.Serial(
+                        port.device, baudrate=baud_rate, bytesize=8,
+                        timeout=1, stopbits=serial.STOPBITS_ONE
+                    )
 
-                spo.write(b"STAGE\r\n")  # Wake up the controller
-                time.sleep(0.1) # Wait for the response to be ready
-                response = spo.readline().decode('ascii').strip()
-                print(f"Initial response from {port.device}: {response}")
-                spo.reset_input_buffer()  # Clear any stale data
-                spo.reset_output_buffer() # Clear any stale data
+                    spo.write(b"STAGE\r\n")  # Wake up the controller
+                    time.sleep(0.1) # Wait for the response to be ready
+                    response = spo.readline().decode('ascii').strip()
+                    print(f"Initial response from {port.device} at {baud_rate}: {response}")
+                    spo.reset_input_buffer()  # Clear any stale data
+                    spo.reset_output_buffer() # Clear any stale data
 
+                    # Write a command ('V') to check for the correct device
+                    spo.write(b"V\r\n")
+                    time.sleep(0.1) # Wait for the response to be ready
+                    # Read the response and strip extra whitespace
+                    response = spo.readline().decode('ascii').strip()
+                    print(f"Response from {port.device} at {baud_rate}: {response}")
+                    
+                    # If response indicates a ProScan III controller, return this serial object
+                    if "E" in response or "R" in response or "ProScan" in response:
+                        print(f"ProScan III controller found on {port.device} at {baud_rate} baud")
+                        return spo
 
-                # Write a command ('V') to check for the correct device
-                spo.write(b"V\r\n")
-                time.sleep(0.1) # Wait for the response to be ready
-                # Read the response and strip extra whitespace
-                response = spo.readline().decode('ascii').strip()
-                print(f"Response from {port.device}: {response}")
-                # If response indicates a ProScan III controller, return this serial object
-                if "E" in response or "R" in response or "ProScan" in response:
-                    print(f"ProScan III controller found on {port.device}")
-                    return spo
-
-                # Otherwise, close the port and continue checking
-                spo.close()
-            except (serial.SerialException, UnicodeDecodeError):
-                # If there's an issue reading or decoding data, just move on to the next port
-                print(f"Error reading from port {port.device}.")
-                continue
+                    # Otherwise, close the port and try next baud rate
+                    spo.close()
+                    
+                except (serial.SerialException, UnicodeDecodeError):
+                    # If there's an issue reading or decoding data, just move on
+                    print(f"Error reading from port {port.device} at {baud_rate} baud.")
+                    continue
         
         # If no ProScan III controller is found, print a message
         print("No ProScan III controller found.")
-        return spo
+        return None
 
     def send_command(self, command):
         """
@@ -186,6 +194,14 @@ class XYStageManager:
                 # On error, print a message and return None for each axis
                 print(f"Error parsing response: {e}")
                 return None, None, None
+            
+    def set_home(self): 
+        """Set the current position as home/reference position for the stage"""
+        response = self.send_command("Z")
+        if response:
+            print(f"HOME command sent, response: {response}")
+        else:
+            print("HOME command sent")
 
     ####################### Stage Movement Functions ##################################
     
@@ -321,24 +337,108 @@ class XYStageManager:
         velocity = int(velocity)
         command = f"SMS,{velocity}"
         self.send_command(command)
+    
+
 
     def set_baudrate(self, baudrate):
         """
         Set the stage communication baudrate to the specified value.
+        BAUD command: Sets the baud rate of the port issuing the command to the value
+        specified by b. As a protection measure, if no command is sent to
+        the port while the controller is switched on, the baud rate will
+        revert to 9600 after switching off and back on again twice.
+        Allowable values for baud rate are 9600 (argument 96), 19200
+        (argument 19) and 38400 (argument 38)
         """
-        # 9600 = 96
-        baudrate_mapping = {9600: 96, 19200: 19, 38400: 38, 57600: 57, 115200: 115}
+        # ProScan III baud rate mapping: actual rate -> command argument
+        baudrate_mapping = {9600: 96, 19200: 19, 38400: 38}
 
-        if baudrate not in [9600, 19200, 38400]: #, 57600, 115200]:
-            print("Error: Invalid baudrate. Choose from [9600, 19200, 38400, 57600, 115200].")
-            return
+        if baudrate not in baudrate_mapping:
+            print(f"Error: Invalid baudrate. Choose from {list(baudrate_mapping.keys())}.")
+            return False
 
+        # Send the BAUD command with the mapped argument
         command = f"BAUD {baudrate_mapping[baudrate]}"
-        self.send_command(command)
-        time.sleep(0.1)  # Wait for the command to be processed
-        if not self.simulate:
-            self.spo.baudrate = baudrate
-            print(f"Baudrate changed to {baudrate}. Please reconnect the serial port if necessary.")
+        
+        if self.simulate:
+            # In simulation, just return success
+            response = self.send_command(command)
+            print(f"Simulated: Baudrate command sent: {command}")
+            return True
+        else:
+            try:
+                # Send the command
+                self.send_command(command)
+                time.sleep(0.1)  # Wait for the command to be processed
+                
+                # Read the response - should be "0" for success
+                response = self.spo.readline().decode('ascii').strip()
+                print(f"BAUD command response: {response}")
+                
+                if response == "0":
+                    # Success - now change the serial port baud rate
+                    print(f"Baudrate successfully changed to {baudrate}")
+                    self.spo.baudrate = baudrate
+                    
+                    # Clear buffers after baud rate change
+                    self.spo.reset_input_buffer()
+                    self.spo.reset_output_buffer()
+                    
+                    # Test communication at new baud rate
+                    self.spo.write(b"V\r\n")
+                    time.sleep(0.1)
+                    test_response = self.spo.readline().decode('ascii').strip()
+                    if test_response:
+                        print(f"Communication test successful at {baudrate} baud: {test_response}")
+                        return True
+                    else:
+                        print("Warning: No response received after baud rate change")
+                        return False
+                else:
+                    print(f"Error: BAUD command failed with response: {response}")
+                    return False
+                    
+            except Exception as e:
+                print(f"Error executing BAUD command: {e}")
+                return False
+
+    def test_baud_rates(self):
+        """
+        Test communication at different baud rates to verify BAUD command functionality.
+        This is useful for troubleshooting communication issues.
+        """
+        if self.simulate:
+            print("Testing BAUD command in simulation mode...")
+            # Test all supported baud rates in simulation
+            for baud_rate in [9600, 19200, 38400]:
+                result = self.set_baudrate(baud_rate)
+                print(f"BAUD {baud_rate}: {'Success' if result else 'Failed'}")
+            return True
+        
+        print("Testing BAUD command with real hardware...")
+        print("Current baud rate:", self.spo.baudrate if self.spo else "Unknown")
+        
+        # Test setting to different baud rates and back
+        original_baud = self.spo.baudrate if self.spo else 9600
+        test_rates = [9600, 19200, 38400]
+        
+        for baud_rate in test_rates:
+            if baud_rate != original_baud:
+                print(f"\nTesting baud rate change to {baud_rate}...")
+                if self.set_baudrate(baud_rate):
+                    # Test communication at new baud rate
+                    pos = self.get_current_position()
+                    if pos[0] is not None:
+                        print(f"Communication successful at {baud_rate} baud")
+                        print(f"Current position: X={pos[0]}, Y={pos[1]}, Z={pos[2]}")
+                    else:
+                        print(f"Communication failed at {baud_rate} baud")
+                else:
+                    print(f"Failed to change to {baud_rate} baud")
+        
+        # Return to original baud rate
+        print(f"\nReturning to original baud rate {original_baud}...")
+        return self.set_baudrate(original_baud)
             
    
 
@@ -358,7 +458,7 @@ class ZPStageManager:
 
         # General settings for communication and state
         self.verbose = False
-        self.baudrate = 115200
+        self.baudrate = 38400
         self.simulate = simulate
         self.printer_found = False
         self.COM = None
@@ -675,17 +775,37 @@ class XYStageSimulator:
                 except ValueError:
                     return "Invalid position values."
             return "Invalid command format."
+        # BAUD command for setting baud rate
+        elif command.startswith("BAUD"):
+            parts = command.split()
+            if len(parts) == 2:
+                try:
+                    baud_arg = int(parts[1])
+                    # Validate against allowed values: 96 (9600), 19 (19200), 38 (38400)
+                    if baud_arg in [96, 19, 38]:
+                        print(f"Simulator: BAUD command received with argument {baud_arg}")
+                        return "0"  # Success response
+                    else:
+                        print(f"Simulator: Invalid BAUD argument {baud_arg}")
+                        return "Invalid baud rate argument."
+                except ValueError:
+                    return "Invalid BAUD command format."
+            return "Invalid BAUD command format."
         # Query command remains unchanged.
         elif command == "P":
             with self.lock:
                 # Return current X, Y and dummy Z (always 0.0)
                 return f"{self.current_x:.2f},{self.current_y:.2f},0.00"
+        # Version query command
+        elif command == "V":
+            return "ProScan III v1.0"
         return "Unknown command."
 
     def get_current_position(self):
         """Return the current position as a tuple (x, y, 0.0)."""
         with self.lock:
             return self.current_x, self.current_y, 0.0
+    
 
     def move_stage_at_velocity(self, vx, vy):
         """Wrapper to send a velocity command."""
@@ -905,25 +1025,64 @@ class ZPStageSimulator:
 
 if __name__ == "__main__":
     # Test the XYStageManager and ZPStageManager classes
-    xy = XYStageManager(simulate=False)
-    zp = ZPStageManager(simulate=False)
+    print("Testing XYStageManager and ZPStageManager...")
+    
+    # Test in simulation mode first
+    print("\n=== SIMULATION MODE TESTS ===")
+    xy = XYStageManager(simulate=True)
+    zp = ZPStageManager(simulate=True)
 
     # Test the XY stage movement functions
+    print("\nTesting XY stage movement...")
     xy.move_stage_at_velocity(100, 50)
     time.sleep(1)
     xy.move_stage_at_velocity(0, 0)
     time.sleep(1)
     xy.move_stage_to_position(100, 100)
     time.sleep(1)
-    print("Current position:", xy.get_current_position())
+    print("Current XY position:", xy.get_current_position())
+
+    # Test BAUD command
+    print("\nTesting BAUD command...")
+    for baud_rate in [9600, 19200, 38400]:
+        success = xy.set_baudrate(baud_rate)
+        print(f"BAUD {baud_rate}: {'Success' if success else 'Failed'}")
 
     # Test the ZP stage movement functions
-    zp.movecommand({'X': 10, 'Y': 20, 'Z': 30, 'E': 40})
+    print("\nTesting ZP stage movement...")
+    zp.move_relative({'X': 10, 'Y': 20, 'Z': 30, 'E': 40})
     time.sleep(1)
-    zp.movecommand({'X': 0, 'Y': 0, 'Z': 0, 'E': 0})
+    zp.move_relative({'X': 0, 'Y': 0, 'Z': 0, 'E': 0})
     time.sleep(1)
-    print("Current position:", zp.get_current_position())
+    print("Current ZP position:", zp.get_current_position())
 
-    # Clean up
+    # Clean up simulation
     xy.stop()
     zp.stop()
+    
+    # Test with hardware if available
+    print("\n=== HARDWARE MODE TESTS ===")
+    try:
+        xy_hw = XYStageManager(simulate=False)
+        if xy_hw.spo:
+            print("Hardware XY stage connected successfully")
+            print("Current position:", xy_hw.get_current_position())
+            
+            # Test BAUD command with hardware
+            print("Testing BAUD command with hardware...")
+            xy_hw.test_baud_rates()
+            
+        xy_hw.stop()
+    except Exception as e:
+        print(f"Hardware XY stage test failed: {e}")
+    
+    try:
+        zp_hw = ZPStageManager(simulate=False)
+        if zp_hw.printer_found:
+            print("Hardware ZP stage connected successfully")
+            print("Current position:", zp_hw.get_current_position())
+        zp_hw.stop()
+    except Exception as e:
+        print(f"Hardware ZP stage test failed: {e}")
+    
+    print("\nAll tests completed!")

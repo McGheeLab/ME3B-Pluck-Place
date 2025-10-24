@@ -25,7 +25,7 @@ def get_teslong_camera_indices():
     """
     indices = []
 #    print("Scanning for cameras...")
-    
+     
     try:
         from pygrabber.dshow_graph import FilterGraph
         graph = FilterGraph()
@@ -233,7 +233,7 @@ def start_camera_feed_with_calibration():
     def movement_thread_func():
         nonlocal calibration_accepted
         while movement_thread_running:
-            user_input = input("-2405,-18918,0 = Calibration Point. Enter movement command (GOTO, PICK, PLACE, FEEDRATE, POSITION, HOME): ").strip()
+            user_input = input("0,0,0 = Calibration Point. Enter movement command (GOTO, PICK, PLACE, FEEDRATE, POSITION, HOME): ").strip()
             if not movement_thread_running:
                 break
             if user_input:
@@ -247,7 +247,7 @@ def start_camera_feed_with_calibration():
                 elif cmd == 'POSITION':
                     handle_position(xy, zp, state, reference)
                 elif cmd == 'HOME':
-                    handle_home(xy, zp, state, reference)
+                    handle_home(xy, state, reference)
                     print("\nCalibration ACCEPTED via HOME command")
                     calibration_accepted = True
                     break
@@ -397,14 +397,14 @@ def handle_position(xy: XYStageManager, zp: ZPStageManager, state: dict, ref: di
     ref.update(state)
     print(f"Position: stage X={x}, Y={y}; printer Z={pz}, X={px}, Y={py}, E={pe}")
 
-def handle_home(xy: XYStageManager, zp: ZPStageManager, state: dict, ref: dict):
+def handle_home(xy: XYStageManager, state: dict, ref: dict):
     # Read current stage and printer positions
     x, y, _ = xy.get_current_position()
-    px, py, pz, pe = zp.get_current_position()
+    xy.set_home()  # Send HOME command to printer Z axis
     # Update state and set as reference
-    state.update(x=x, y=y, z=pz, p1=px, p2=py, p3=pe)
+    state.update(x=x, y=y, z=0.0, p1=0.0, p2=0.0, p3=0.0)
     ref.update(state)
-    print(f"HOME set: stage X={x}, Y={y}; printer Z={pz}, X={px}, Y={py}, E={pe}")
+    print(f"HOME set: stage X={x}, Y={y}; printer Z=0.0, X=0.0, Y=0.0, E=0.0")
 
 # This is the experimental FEEDRATE command to adjust printer speed
 def handle_feedrate(arg_str, zp: ZPStageManager):
@@ -452,7 +452,7 @@ def print_help():
     print("  FEEDRATE <num>  -- set printer z axis feedrate (mm/min) - Includes pick/place")
     print("  VELOCITY VX,VY  -- set XY stage velocity (continuous movement)")
     print("FEEDRATE <200>  -- is the standard speed")
-    print("REMEMBER: Enter GOTO 0,0,20 before continuing, the txt files are calibrated to this point")
+    print("REMEMBER: Send the Z axis up 20 before entering Home")
 
 
 def main():
@@ -487,7 +487,7 @@ def main():
                 elif cmd == 'PLACE':
                     handle_place(args, zp, state)
                 elif cmd == 'HOME':
-                    handle_home(xy, zp, state, reference)
+                    handle_home(xy, state, reference)
                 elif cmd == 'FEEDRATE':
                     handle_feedrate(args, zp)
                 elif cmd == 'VELOCITY':

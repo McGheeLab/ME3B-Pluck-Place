@@ -9,7 +9,7 @@ Commands:
   PICK P1,P2,P3   -- Move printer axes X += P1, Y += P2, E += P3 relative to current positions
   PLACE P1,P2,P3  -- Move printer axes X -= P1, Y -= P2, E -= P3 relative to current positions
   HOME            -- Set current stage X,Y and printer Z,X,Y,E as reference zero
-"""
+""" 
 import sys
 import re
 import json
@@ -228,12 +228,11 @@ def handle_place(arg_str, zp: ZPStageManager, state: dict):
     print(f"PLACE executed: printer X+={p1}, Y+={p2}, E+={p3} (feedrate={zp.feedrate})")
 
 
-def handle_home(xy: XYStageManager, zp: ZPStageManager, state: dict, ref: dict):
+def handle_home(xy: XYStageManager, state: dict, ref: dict):
     # Read current stage and printer positions
     x, y, _ = xy.get_current_position()
-    px, py, pz, pe = zp.get_current_position()
     # Set current position as software reference (0,0,0)
-    state.update(x=0.0, y=0.0, z=0.0, p1=px, p2=py, p3=pe)
+    xy.set_home()  # Send HOME command to printer Z axis
     # Store the actual hardware positions as reference
     ref.update(hw_x=x, hw_y=y, hw_z=pz, x=0.0, y=0.0, z=0.0, p1=px, p2=py, p3=pe)
     print(f"HOME set: Current position is now software (0,0,0)")
@@ -248,6 +247,15 @@ def handle_feedrate(arg_str, zp: ZPStageManager):
         return
     zp.set_max_feedrate(feedrate)
 
+def handle_velocity(arg_str, xy: XYStageManager):
+    try:
+        vx, vy = parse_floats(arg_str, 2)
+    except ValueError:
+        print("Syntax: VELOCITY VX,VY")
+        return
+    xy.move_stage_at_velocity(vx, vy)
+    print(f"VELOCITY executed: XY stage moving at VX={vx}, VY={vy}")
+
 def print_help():
     print("Available commands:")
     print("  CALIBRATE           -- set current position as needle reference (0,0,0)")
@@ -256,6 +264,8 @@ def print_help():
     print("  PICK P1,P2,P3       -- printer X/Y/E -")
     print("  PLACE P1,P2,P3      -- printer X/Y/E +")
     print("  HOME                -- set reference zero")
+    print("  FEEDRATE <num>      -- set printer feedrate (mm/min)")
+    print("  VELOCITY VX,VY      -- set XY stage velocity (continuous movement)")
     print("  LOAD_CONFIG <file>  -- load calibration config file")
     print("  EXIT, QUIT          -- exit program")
 
@@ -325,6 +335,8 @@ def main():
                     handle_home(xy, zp, state, reference)
                 elif cmd == 'FEEDRATE':
                     handle_feedrate(args, zp)
+                elif cmd == 'VELOCITY':
+                    handle_velocity(args, xy)
                 elif cmd == 'DELAY':
                     try:
                         delay_seconds = float(args)
