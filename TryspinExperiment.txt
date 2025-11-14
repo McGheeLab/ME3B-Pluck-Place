@@ -1,0 +1,25 @@
+GOTO 85006,18197,0
+Delay 10
+
+GOTO 85006,18197,-20
+Delay 10 
+
+Feedrate 50 
+Delay 2
+
+GOTO 85006,18197,-8
+Delay 20
+
+Feedrate 200
+Delay 2
+
+PLACE 0.25,0,0
+DELAY 5
+
+### MOVE UP 
+
+Feedrate 50 
+Delay 2
+
+GOTO 85006,18197,8
+Delay 20
