@@ -2,7 +2,7 @@
 
 ### PLACE 2.5 = 100 uL
 
-###  20 uL = PICK 0.5,0,0
+###  20 uL = PLACE 0.5,0,0
 
 GOTO 47437,48394,0
 DELAY 5
