@@ -197,28 +197,36 @@ def start_camera_feed_with_calibration():
     
     # Get camera indices
     indices = get_teslong_camera_indices()
+    camera_mode = True
+    caps = []
+    
     if not indices:
-        print("No cameras found.")
-        return False
+        print("No cameras found. Continuing in text-only mode.")
+        camera_mode = False
+    else:
+        # Initialize cameras with proper error handling
+        caps = initialize_cameras(indices)
+        if not caps:
+            print("No cameras could be initialized properly. Continuing in text-only mode.")
+            camera_mode = False
     
-    # Initialize cameras with proper error handling
-    caps = initialize_cameras(indices)
-    if not caps:
-        print("No cameras could be initialized properly.")
-        return False
-    
-    # Create separate windows for each camera
-    for i in range(len(caps)):
-        window_name = f"Camera {i+1} - Calibration"
-        cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)
+    # Create separate windows for each camera (only if in camera mode)
+    if camera_mode:
+        for i in range(len(caps)):
+            window_name = f"Camera {i+1} - Calibration"
+            cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)
     
     global gamma, brightness, contrast
     
-    # Show calibration prompt AFTER cameras are initialized
+    # Show calibration prompt
     print("\n" + "="*60)
-    print("The two cameras must be connected on separate ports due to bandwidth limitations.")
-    print("Line the needle up on both feeds to the red corner.")
-    print("Press Y to accept calibration.")
+    if camera_mode:
+        print("The two cameras must be connected on separate ports due to bandwidth limitations.")
+        print("Line the needle up on both feeds to the red corner.")
+        print("Press Y to accept calibration.")
+    else:
+        print("CAMERA-FREE MODE: Movement interface is available without camera feedback.")
+        print("Use movement commands to calibrate or press Y to continue.")
     print("="*60)
     
 
@@ -262,45 +270,59 @@ def start_camera_feed_with_calibration():
     movement_thread.start()
 
     try:
-        while not calibration_accepted:
-            display_separate_cameras(caps)
-            frame_count += 1
-            key = cv2.waitKey(30) & 0xFF
-            if key == ord('y') or key == ord('Y'):
-                print("\nCalibration ACCEPTED")
-                calibration_accepted = True
-                # Show message and allow movement thread to finish
-                time.sleep(0.5)
-                break
-            elif key == ord('n') or key == ord('N'):
-                print("\nCalibration REJECTED")
-                break
-            elif key == ord('q') or key == 27:
-                print("\nExiting without calibration")
-                break
-            elif key == ord('+') or key == ord('='):
-                brightness = min(brightness + 5, 100)
-            elif key == ord('-'):
-                brightness = max(brightness - 5, -100)
-            elif key == ord('g'):
-                gamma = min(gamma + 0.1, 3.0)
-            elif key == ord('G'):
-                gamma = max(gamma - 0.1, 0.1)
-            elif key == ord('c'):
-                contrast = min(contrast + 0.1, 3.0)
-            elif key == ord('C'):
-                contrast = max(contrast - 0.1, 0.1)
+        if camera_mode:
+            # Camera mode - display cameras and wait for keypress
+            while not calibration_accepted:
+                display_separate_cameras(caps)
+                frame_count += 1
+                key = cv2.waitKey(30) & 0xFF
+                if key == ord('y') or key == ord('Y'):
+                    print("\nCalibration ACCEPTED")
+                    calibration_accepted = True
+                    # Show message and allow movement thread to finish
+                    time.sleep(0.5)
+                    break
+                elif key == ord('n') or key == ord('N'):
+                    print("\nCalibration REJECTED")
+                    break
+                elif key == ord('q') or key == 27:
+                    print("\nExiting without calibration")
+                    break
+                elif key == ord('+') or key == ord('='):
+                    brightness = min(brightness + 5, 100)
+                elif key == ord('-'):
+                    brightness = max(brightness - 5, -100)
+                elif key == ord('g'):
+                    gamma = min(gamma + 0.1, 3.0)
+                elif key == ord('G'):
+                    gamma = max(gamma - 0.1, 0.1)
+                elif key == ord('c'):
+                    contrast = min(contrast + 0.1, 3.0)
+                elif key == ord('C'):
+                    contrast = max(contrast - 0.1, 0.1)
+        else:
+            # Text-only mode - just wait for movement commands
+            print("\nText-only mode active. Use movement commands or press Ctrl+C to exit.")
+            while not calibration_accepted:
+                time.sleep(0.1)  # Small delay to prevent busy waiting
 
     finally:
         movement_thread_running = False
-        print(f"Processed {frame_count} frames")
-        cv2.destroyAllWindows()
-        for cap in caps:
-            if cap:
-                cap.release()
+        if camera_mode:
+            print(f"Processed {frame_count} frames")
+            cv2.destroyAllWindows()
+            for cap in caps:
+                if cap:
+                    cap.release()
+        else:
+            print("Text-only mode session completed")
 
     if calibration_accepted:
         print("Calibration process completed successfully!")
+    elif not camera_mode:
+        # In text-only mode, consider it successful if we got here
+        print("Text-only calibration session completed successfully!")
+        return True
     return calibration_accepted
 
 def parse_floats(arg_str, count):
