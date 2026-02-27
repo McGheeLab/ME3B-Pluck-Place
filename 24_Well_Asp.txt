@@ -1,5 +1,7 @@
 #### Automated text file to run 10 wells from a 24 well plate with wells 23 and 24 as the waste and trypsin wells
 #### The file will require you to use a test 10 well, touch the top, and move up a single command (1 mm) as calibration 
+#### Make sure you aspirate trypsin and extrude a small bolus before starting 
+#### Adjust the delay times as needed for the experiment 
 
 #### LETTERS ON THE 24 TO THE LEFT #####
 
